@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ShipPulse — Production Roadmap</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%230B0E0C'/><circle cx='8' cy='8' r='4' fill='%2320F86C'/></svg>" />
+  <style>
+    :root { --bg:#0B0E0C; --card:#121714; --border:#223028; --fg:#EEF2EF; --muted:#83948A; --green:#20F86C; --blue:#5CC8FF; }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:32px; background:var(--bg); color:var(--fg); font:16px/1.5 system-ui,-apple-system,sans-serif; }
+    .wrap { max-width:920px; margin:0 auto; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:16px; border-bottom:1px solid var(--border); padding-bottom:18px; margin-bottom:24px; }
+    h1 { margin:0; font-size:28px; letter-spacing:-0.02em; }
+    h1 span { color:var(--green); }
+    .pills { display:flex; gap:10px; align-items:center; font:13px/1 monospace; }
+    .pill { padding:6px 12px; border-radius:999px; border:1px solid var(--border); background:var(--card); color:var(--blue); }
+    .pill.green { color:var(--green); border-color:#1f5e36; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+    .panel { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px; }
+    .panel h2 { margin:0 0 12px; font-size:14px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); }
+    form { display:flex; gap:8px; flex-wrap:wrap; }
+    input { flex:1; min-width:140px; padding:10px 12px; border-radius:8px; border:1px solid var(--border); background:#0E1310; color:var(--fg); font-size:14px; }
+    button { padding:10px 16px; border-radius:8px; border:1px solid #1f5e36; background:#14281C; color:var(--green); font-weight:600; cursor:pointer; }
+    button:hover { background:#1b3827; }
+    #auth-status { margin-top:8px; font-size:13px; color:var(--muted); }
+    .list { display:flex; flex-direction:column; gap:12px; }
+    .feature-card { display:flex; align-items:center; justify-content:space-between; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:16px 20px; }
+    .feature-title { font-size:18px; font-weight:600; }
+    .feature-status { font:12px/1 monospace; color:var(--blue); text-transform:uppercase; margin-top:4px; }
+    .upvote-btn { display:inline-flex; align-items:center; gap:8px; font-family:monospace; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Ship<span>Pulse</span> Production Roadmap</h1>
+      </div>
+      <div class="pills">
+        <span class="pill" id="prod-host">localhost</span>
+        <span class="pill green" id="storage-badge">supabase</span>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>Sign In (Supabase Auth + RLS)</h2>
+        <form id="auth-form">
+          <input id="auth-email" type="email" placeholder="alice@example.com" required />
+          <input id="auth-password" type="password" placeholder="password" required />
+          <button id="auth-submit" type="submit">Sign In</button>
+        </form>
+        <div id="auth-status">Viewing public roadmap as anonymous visitor</div>
+      </section>
+
+      <section class="panel">
+        <h2>Submit Feature</h2>
+        <form id="feature-form">
+          <input id="feature-title" type="text" placeholder="Describe a roadmap feature..." required />
+          <button id="feature-submit" type="submit">Add Feature</button>
+        </form>
+      </section>
+    </div>
+
+    <section class="list" id="roadmap"></section>
+  </div>
+
+  <script>
+    const hostEl = document.getElementById("prod-host");
+    const badgeEl = document.getElementById("storage-badge");
+    const statusEl = document.getElementById("auth-status");
+    const listEl = document.getElementById("roadmap");
+    hostEl.textContent = location.host || "localhost";
+    let token = sessionStorage.getItem("sp_token") || "";
+    let userEmail = sessionStorage.getItem("sp_email") || "";
+    if (userEmail) statusEl.textContent = "Signed in as " + userEmail;
+
+    function authHeaders() {
+      const h = { "Content-Type": "application/json" };
+      if (token) h.Authorization = "Bearer " + token;
+      return h;
+    }
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+    }
+
+    async function loadFeatures() {
+      const res = await fetch("/api/features", { headers: token ? { Authorization: "Bearer " + token } : {} });
+      const data = await res.json();
+      if (data.storage) badgeEl.textContent = data.storage;
+      listEl.innerHTML = (data.features || []).map((f) => `
+        <article class="feature-card" data-id="${esc(f.id)}">
+          <div>
+            <div class="feature-title">${esc(f.title)}</div>
+            <div class="feature-status">${esc(f.status || "planned")}</div>
+          </div>
+          <button class="upvote-btn" type="button" data-id="${esc(f.id)}">
+            ▲ Upvote <span class="vote-count">${Number(f.votes || 0)}</span>
+          </button>
+        </article>
+      `).join("");
+    }
+
+    document.getElementById("auth-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("auth-email").value.trim();
+      const password = document.getElementById("auth-password").value;
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (res.ok && data.accessToken) {
+        token = data.accessToken;
+        userEmail = data.user?.email || email;
+        sessionStorage.setItem("sp_token", token);
+        sessionStorage.setItem("sp_email", userEmail);
+        statusEl.textContent = "Signed in as " + userEmail;
+      }
+    });
+
+    document.getElementById("feature-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const input = document.getElementById("feature-title");
+      const title = input.value.trim();
+      if (!title) return;
+      const res = await fetch("/api/features", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ title, status: "planned" }),
+      });
+      if (res.ok) {
+        input.value = "";
+        await loadFeatures();
+      }
+    });
+
+    listEl.addEventListener("click", async (e) => {
+      const btn = e.target.closest(".upvote-btn");
+      if (!btn) return;
+      const res = await fetch("/api/vote", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ featureId: btn.dataset.id }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const vc = btn.querySelector(".vote-count");
+        if (vc) vc.textContent = String(data.votes);
+      }
+    });
+
+    loadFeatures();
+  </script>
+</body>
+</html>

@@ -3,5 +3,10 @@ node_modules
 logs/
 .ralph/
 .env*
+.env.local
+.vercel
+.vercel/
 supabase/.temp/
+.agents/mcp_config.json
 verify-shippulse.png
+prod-shippulse.png
