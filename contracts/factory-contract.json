@@ -1,0 +1,21 @@
+{
+  "factory": "software-factory",
+  "app": "ShipPulse",
+  "pluginRoot": ".agents/plugins/software-factory",
+  "hooksPath": "hooks.json",
+  "supabaseProject": "shippulse-dev",
+  "stages": ["/factory-spec", "factory.sh", "ralph-loops",
+    "/factory-audit", "/factory-ship"],
+  "lanes": {
+    "db-api":   { "branch": "feat/db-api",   "backlog": ".ralph/PRD.json",
+      "owns": ["supabase/", "src/lib/db/", "src/app/api/"] },
+    "ui-board": { "branch": "feat/ui-board", "backlog": ".ralph/PRD.json",
+      "owns": ["src/components/", "src/app/board/", "src/app/changelog/"] },
+    "auth-e2e": { "branch": "feat/auth-e2e", "backlog": ".ralph/PRD.json",
+      "owns": ["src/app/auth/", "src/middleware.ts", "tests/e2e/",
+        "scripts/e2e-shippulse.mjs"] }
+  },
+  "verifyGates": ["typecheck", "lint", "unit", "playwright-ui", "pretool-safety"],
+  "releaseGates": ["rls-auth-uid", "supabase-advisors", "secret-scan",
+    "github-ci", "prod-smoke"]
+}

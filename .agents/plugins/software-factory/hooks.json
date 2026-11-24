@@ -1,0 +1,18 @@
+{
+  "factory-safety": {
+    "PreToolUse": [{
+      "matcher": "run_command|(view|read|grep|find|list)_.*",
+      "hooks": [{"command": "./hooks/pretool-safety.py", "timeout": 5}]
+    }]
+  },
+  "factory-quality": {
+    "PostToolUse": [{
+      "matcher": "(write|edit)_.*|.*replace_file_content",
+      "hooks": [{"command": "./hooks/posttool-quality.py", "timeout": 5}]
+    }]
+  },
+  "factory-loop": {
+    "SessionStart": [{"command": "./hooks/session-context.py", "timeout": 5}],
+    "Stop": [{"command": "./hooks/stop-guard.py", "timeout": 15}]
+  }
+}

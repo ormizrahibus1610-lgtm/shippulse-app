@@ -1,0 +1,19 @@
+{
+  "name": "shippulse",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "node scripts/lint-check.mjs",
+    "test": "node scripts/run-unit-tests.mjs",
+    "e2e": "TMPDIR=/tmp node scripts/e2e-shippulse.mjs",
+    "verify": "bash scripts/verify.sh"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "playwright-core": "^1.65.1",
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,7 @@
+node_modules
+*.log
+logs/
+.ralph/
+.env*
+supabase/.temp/
+verify-shippulse.png

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://antigravity.google/schemas/v1/plugin.json",
+  "name": "software-factory",
+  "displayName": "Software Factory",
+  "version": "1.0.0",
+  "description": "Portable prompt-to-production skills, hooks, rules, and MCP.",
+  "suggestedPrompts": [
+    "Run /factory-spec on SHIPPULSE-PROMPT.md"
+  ],
+  "license": "MIT",
+  "keywords": ["software-factory", "ralph", "tmux", "supabase"]
+}
